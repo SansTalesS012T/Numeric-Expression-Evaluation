@@ -127,7 +127,7 @@ public:
                 }
                 else {
                     // std::cout << "case 4: " << raw[i] << "\n";
-                    while(!stack->isEmpty() && stack->peek() != "(" && (precedence[indexOf(symbol, raw[i])] < precedence[stack->peek()[0]])) {
+                    while(!stack->isEmpty() && stack->peek() != "(" && (precedence[indexOf(symbol, raw[i])] < precedence[indexOf(symbol, stack->peek()[0])])) {
                         // std::cout << "peek: " << stack->peek() << "\n";
                         res->append(stack->peek());
                         stack->pop();
