@@ -73,7 +73,7 @@ public:
 
     LinkedList<string> *infixToPostfix(string raw) {
         int length = raw.length(), i = 0;
-        stack->clear();
+        stack->clear(), list->clear();
         LinkedList<string> *res = new LinkedList<string>();
         string symbol = "(+-*/^";
         int precedence[] = {0, 1, 2, 3, 4, 5};
@@ -109,9 +109,11 @@ public:
                 }
 
                 if(stack->isEmpty() || raw[i] == '(') {
+                    // std::cout << "case 1: " << raw[i] << "\n";
                     stack->push(charToStr(raw[i]));
                 }
                 else if(raw[i] == ')') {
+                    // std::cout << "case 2: " << raw[i] << "\n";
                     while(!stack->isEmpty() && stack->peek() != "(") {
                         res->append(stack->peek());
                         stack->pop();
@@ -119,15 +121,18 @@ public:
                     stack->pop();
                 }
                 else if(precedence[indexOf(symbol, raw[i])] >= precedence[indexOf(symbol, stack->peek()[0])]) {
+                    // std::cout << "case 3: " << raw[i] << "\n";
                     // std::cout << raw[i] << " " << stack->peek() << std::endl;
                     stack->push(charToStr(raw[i]));
                 }
                 else {
-                    while(!stack->isEmpty() && (precedence[indexOf(symbol, raw[i])] < precedence[stack->peek()[0]])) {
+                    // std::cout << "case 4: " << raw[i] << "\n";
+                    while(!stack->isEmpty() && stack->peek() != "(" && (precedence[indexOf(symbol, raw[i])] < precedence[stack->peek()[0]])) {
+                        // std::cout << "peek: " << stack->peek() << "\n";
                         res->append(stack->peek());
                         stack->pop();
                     }
-                    stack->push(charToStr(raw[i]));
+                    stack->push(charToStr(raw[i])); 
                 }
                 i++;
             }
