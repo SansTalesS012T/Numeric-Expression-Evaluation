@@ -53,8 +53,13 @@ public:
 
     void pop() {
         if(isEmpty()) return ;
-        tail = tail->getPrev();
-        delete tail->getNext();
+        if(size == 1) {
+            head = tail = nullptr;
+        }
+        else {
+            tail = tail->getPrev();
+            delete tail->getNext();
+        }
         size--;
     }
 
@@ -110,6 +115,12 @@ public:
         delete temp;
         if(index == 0) head = after;
         size--;
+    }
+
+    void clear() {
+        while(!isEmpty()) {
+            pop();
+        }
     }
 };
 
