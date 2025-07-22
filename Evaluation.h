@@ -91,6 +91,7 @@ public:
             else {
                 // logic for - sign
                 if(raw[i] == '-') {
+                    int def_i = i;
                     for(int j = i + 1; j < length; j++) {
                         if(raw[j] == ' ') continue;
                         if(isNumber(raw[j])) {
@@ -98,7 +99,6 @@ public:
                             number = "-" + number;
                             bool logic = res->isEmpty();
                             res->append(number);
-                            if(!logic) res->append("+");
                             i = j + number.length() - 1;
                             break;
                         }
@@ -106,7 +106,15 @@ public:
                             negativeLogicStack->push("+");
                             negativeLogicStack->push("*");
                             negativeLogicStack->push("-1");
-                            i += 1;
+                            i++;
+                            break;
+                        }
+                    }
+                    for (int j = def_i - 1; j >= 0; j--) {
+                        if(raw[j] == ' ' || raw[j] == '(') continue;
+                        if(raw[j] == '*' || raw[j] == '/' || raw[j] == '^') break;
+                        else {
+                            res->append("+");
                             break;
                         }
                     }
