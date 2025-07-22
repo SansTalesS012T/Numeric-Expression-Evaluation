@@ -49,7 +49,7 @@ public:
         string symbol = "(+-*/^";
         Stack<double> *stack2 = new Stack<double>(); 
         Node<string> *temp = list->getHead();
-        // list->print();
+        list->print();
         while(temp) {
             // std::cout << "data: " << temp->getData() << "\n";
             if(isSubstring(symbol, temp->getData())) {
@@ -74,6 +74,7 @@ public:
     LinkedList<string> *infixToPostfix(string raw) {
         int length = raw.length(), i = 0;
         stack->clear(), list->clear();
+        Stack<string> *negativeLogicStack = new Stack<string>();
         LinkedList<string> *res = new LinkedList<string>();
         string symbol = "(+-*/^";
         int precedence[] = {0, 1, 2, 3, 4, 5};
@@ -90,22 +91,26 @@ public:
             else {
                 // logic for - sign
                 if(raw[i] == '-') {
-                    bool isSign = true;
-                    for(int j = i - 1; j >= 0; j -= 1) {
+                    for(int j = i + 1; j < length; j++) {
                         if(raw[j] == ' ') continue;
-                        else if(isNumber(raw[j]) || raw[j] == ')') {
-                            isSign = false;
+                        if(isNumber(raw[j])) {
+                            string number = extractNumber(raw, j);
+                            number = "-" + number;
+                            bool logic = res->isEmpty();
+                            res->append(number);
+                            if(!logic) res->append("+");
+                            i = j + number.length() - 1;
                             break;
                         }
-                        else break;
+                        else {
+                            negativeLogicStack->push("+");
+                            negativeLogicStack->push("*");
+                            negativeLogicStack->push("-1");
+                            i += 1;
+                            break;
+                        }
                     }
-                    if(isSign) {
-                        string number = extractNumber(raw, i);
-                        // std::cout << raw[i] << ":" << number << " True\n";
-                        i += number.length();
-                        res->append(number);
-                        continue;
-                    }
+                    continue;
                 }
 
                 if(stack->isEmpty() || raw[i] == '(') {
@@ -119,6 +124,12 @@ public:
                         stack->pop();
                     }
                     stack->pop();
+                    if(!negativeLogicStack->isEmpty()) {
+                        for(int count = 0; count < 3; count++) {
+                            res->append(negativeLogicStack->peek());
+                            negativeLogicStack->pop();
+                        }
+                    }
                 }
                 else if(precedence[indexOf(symbol, raw[i])] >= precedence[indexOf(symbol, stack->peek()[0])]) {
                     // std::cout << "case 3: " << raw[i] << "\n";
