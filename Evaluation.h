@@ -49,7 +49,7 @@ public:
         string symbol = "(+-*/^";
         Stack<double> *stack2 = new Stack<double>(); 
         Node<string> *temp = list->getHead();
-        list->print();
+        // list->print();
         while(temp) {
             // std::cout << "data: " << temp->getData() << "\n";
             if(isSubstring(symbol, temp->getData())) {
