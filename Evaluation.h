@@ -77,32 +77,31 @@ public:
         Stack<string> *negativeLogicStack = new Stack<string>();
         LinkedList<string> *res = new LinkedList<string>();
         string symbol = "(+-*/^";
-        int precedence[] = {0, 1, 2, 3, 4, 5};
+        int precedence[] = {0, 1, 2, 3, 4, 5}; // precedence pair with operations in symbol
         while(i < length) {
-            if(isNumber(raw[i])) {
-                string number = extractNumber(raw, i);
-                i += number.length();
-                res->append(number);
+            if(isNumber(raw[i])) { 
+                string number = extractNumber(raw, i); // get a current number in string as substring
+                i += number.length(); // move i to back of number
+                res->append(number); // push number to back of linked list
             }
-            else if(raw[i] == ' ') {
+            else if(raw[i] == ' ') { // skip iteration if it's space
                 i++; 
                 continue;
             }
             else {
-                // logic for - sign
+                // dealing with a negative number
                 if(raw[i] == '-') {
                     int def_i = i;
-                    for(int j = i + 1; j < length; j++) {
+                    for(int j = i + 1; j < length; j++) { // append '-' sign in front of number then push it in back of linked listed
                         if(raw[j] == ' ') continue;
                         if(isNumber(raw[j])) {
                             string number = extractNumber(raw, j);
                             number = "-" + number;
-                            bool logic = res->isEmpty();
                             res->append(number);
-                            i = j + number.length() - 1;
+                            i = j + number.length() - 1; // move i to the 
                             break;
                         }
-                        else {
+                        else { // dealing with a negative number that need to be calculate in parenthesis
                             negativeLogicStack->push("+");
                             negativeLogicStack->push("*");
                             negativeLogicStack->push("-1");
@@ -110,7 +109,7 @@ public:
                             break;
                         }
                     }
-                    for (int j = def_i - 1; j >= 0; j--) {
+                    for (int j = def_i - 1; j >= 0; j--) { // push '+' in stack if current negative number don't have operation
                         if(raw[j] == ' ' || raw[j] == '(') continue;
                         if(raw[j] == '*' || raw[j] == '/' || raw[j] == '^') break;
                         else {
@@ -125,14 +124,14 @@ public:
                     // std::cout << "case 1: " << raw[i] << "\n";
                     stack->push(charToStr(raw[i]));
                 }
-                else if(raw[i] == ')') {
+                else if(raw[i] == ')') { // if current iteration is ')' we gonna pop stack and append in linked list until we find '('
                     // std::cout << "case 2: " << raw[i] << "\n";
                     while(!stack->isEmpty() && stack->peek() != "(") {
                         res->append(stack->peek());
                         stack->pop();
                     }
                     stack->pop();
-                    if(!negativeLogicStack->isEmpty()) {
+                    if(!negativeLogicStack->isEmpty()) { // if value in parenthesis need to be negative then we gonna append -1, *, + in linked list
                         for(int count = 0; count < 3; count++) {
                             res->append(negativeLogicStack->peek());
                             negativeLogicStack->pop();
@@ -156,6 +155,8 @@ public:
                 i++;
             }
         }
+
+        // if loop end but stack still remain item then pop all stack then append to linked list
         while(!stack->isEmpty()) {
             res->append(stack->peek());
             stack->pop();
