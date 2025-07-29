@@ -87,38 +87,37 @@ public:
             else if(raw[i] == ' ') { // skip iteration if it's space
                 i++; 
                 continue;
+            }            
+            else if(raw[i] == '-') { // dealing with a negative number
+                int def_i = i;
+                for(int j = i + 1; j < length; j++) { // append '-' sign in front of number then push it in back of linked listed
+                    if(raw[j] == ' ') continue;
+                    if(isNumber(raw[j])) {
+                        string number = extractNumber(raw, j);
+                        number = "-" + number;
+                        res->append(number);
+                        i = j + number.length() - 1; // move i to the 
+                        break;
+                    }
+                    else { // dealing with a negative number that need to be calculate in parenthesis
+                        negativeLogicStack->push("+");
+                        negativeLogicStack->push("*");
+                        negativeLogicStack->push("-1");
+                        i++;
+                        break;
+                    }
+                }
+                for (int j = def_i - 1; j >= 0; j--) { // push '+' in stack if current negative number don't have operation
+                    if(raw[j] == ' ' || raw[j] == '(') continue;
+                    if(raw[j] == '*' || raw[j] == '/' || raw[j] == '^') break;
+                    else {
+                        res->append("+");
+                        break;
+                    }
+                }
+                continue;
             }
             else {
-                // dealing with a negative number
-                if(raw[i] == '-') {
-                    int def_i = i;
-                    for(int j = i + 1; j < length; j++) { // append '-' sign in front of number then push it in back of linked listed
-                        if(raw[j] == ' ') continue;
-                        if(isNumber(raw[j])) {
-                            string number = extractNumber(raw, j);
-                            number = "-" + number;
-                            res->append(number);
-                            i = j + number.length() - 1; // move i to the 
-                            break;
-                        }
-                        else { // dealing with a negative number that need to be calculate in parenthesis
-                            negativeLogicStack->push("+");
-                            negativeLogicStack->push("*");
-                            negativeLogicStack->push("-1");
-                            i++;
-                            break;
-                        }
-                    }
-                    for (int j = def_i - 1; j >= 0; j--) { // push '+' in stack if current negative number don't have operation
-                        if(raw[j] == ' ' || raw[j] == '(') continue;
-                        if(raw[j] == '*' || raw[j] == '/' || raw[j] == '^') break;
-                        else {
-                            res->append("+");
-                            break;
-                        }
-                    }
-                    continue;
-                }
 
                 if(stack->isEmpty() || raw[i] == '(') {
                     // std::cout << "case 1: " << raw[i] << "\n";
