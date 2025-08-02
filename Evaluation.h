@@ -8,25 +8,26 @@ class Eval {
 private:
     string currentExpression;
     double currentResult;
-    Stack<string> *stack;
-    LinkedList<string> *list;
     LinkedList<Pair*> *logs;
 
 public:
     Eval() {
         currentExpression = "";
         currentResult = 0;
-        stack = new Stack<string>();
-        list = new LinkedList<string>();
         logs = new LinkedList<Pair*>();
     }
 
+    ~Eval() {
+        delete logs;
+    }
+
     void setExpression(string raw) {
-        currentExpression = raw;
-        list = infixToPostfix(currentExpression);
-        currentResult = DoEval();
-        Pair *newLog = new Pair(raw, currentResult);
-        logs->append(newLog);
+        this->currentExpression = raw;
+        LinkedList<string> *list = this->infixToPostfix(this->reformat(raw));
+        this->currentResult = this->DoEval(list);
+        Pair *newLog = new Pair(raw, this->currentResult);
+        this->logs->append(newLog);
+        delete list;
     }
 
     double getResult() { return currentResult; }
@@ -45,9 +46,9 @@ public:
         }
     }
 
-    double DoEval() {
+    double DoEval(LinkedList<string> *list) {
         string symbol = "(+-*/^";
-        Stack<double> *stack2 = new Stack<double>(); 
+        Stack<double> *stack = new Stack<double>(); 
         Node<string> *temp = list->getHead();
         // list->print();
         while(temp) {
@@ -55,102 +56,55 @@ public:
             if(isSubstring(symbol, temp->getData())) {
                 // std::cout << "Do what ";
                 double num1, num2;
-                num2 = stack2->peek();
-                stack2->pop();
-                num1 = stack2->peek();
+                num2 = stack->peek();
+                stack->pop();
+                num1 = stack->peek();
                 // std::cout << "num1 ... num2: " << num1 << " " << temp->getData() << " " << num2 << std::endl;
-                stack2->pop();
-                stack2->push(doArithmetic(num1, num2, temp->getData()));
-                // std::cout << "num3: " << stack2->peek() << std::endl;
+                stack->pop();
+                stack->push(doArithmetic(num1, num2, temp->getData()));
+                // std::cout << "num3: " << stack->peek() << std::endl;
             }
             else {
-                stack2->push(stringToDouble(temp->getData()));
+                stack->push(stringToDouble(temp->getData()));
             }
             temp = temp->getNext();
         }
-        return stack2->peek();
+        return stack->peek();
     }
 
     LinkedList<string> *infixToPostfix(string raw) {
+        // std::cout << "Formated: " << raw << std::endl;
         int length = raw.length(), i = 0;
-        stack->clear(), list->clear();
-        Stack<string> *negativeLogicStack = new Stack<string>();
+        Stack<string> *stack = new Stack<string>();
         LinkedList<string> *res = new LinkedList<string>();
-        string symbol = "(+-*/^";
-        int precedence[] = {0, 1, 2, 3, 4, 5}; // precedence pair with operations in symbol
+        bool firstNum = true;
         while(i < length) {
-            if(isNumber(raw[i])) { 
-                string number = extractNumber(raw, i); // get a current number in string as substring
+            if(this->isNumber(raw[i])) { 
+                string number = this->extractNumber(raw, i); // get a current number in string as substring
                 i += number.length(); // move i to back of number
                 res->append(number); // push number to back of linked list
+                firstNum = false;
             }
-            else if(raw[i] == ' ') { // skip iteration if it's space
-                i++; 
-                continue;
-            }            
             else if(raw[i] == '-') { // dealing with a negative number
-                int def_i = i;
-                for(int j = i + 1; j < length; j++) { // append '-' sign in front of number then push it in back of linked listed
-                    if(raw[j] == ' ') continue;
-                    if(isNumber(raw[j])) {
-                        string number = extractNumber(raw, j);
-                        number = "-" + number;
-                        res->append(number);
-                        i = j + number.length() - 1; // move i to the 
-                        break;
-                    }
-                    else { // dealing with a negative number that need to be calculate in parenthesis
-                        negativeLogicStack->push("+");
-                        negativeLogicStack->push("*");
-                        negativeLogicStack->push("-1");
-                        i++;
-                        break;
-                    }
+                if(this->isNumber(raw[i + 1]) && firstNum) { // case negative number is first order
+                    string number = "-" + this->extractNumber(raw, i + 1);
+                    res->append(number);
+                    i += number.length();
+                    firstNum = false;   
                 }
-                for (int j = def_i - 1; j >= 0; j--) { // push '+' in stack if current negative number don't have operation
-                    if(raw[j] == ' ' || raw[j] == '(') continue;
-                    if(raw[j] == '*' || raw[j] == '/' || raw[j] == '^') break;
-                    else {
-                        res->append("+");
-                        break;
-                    }
+                else if(this->isNumber(raw[i + 1])) { // case next to '-' is number
+                    string number = "-" + this->extractNumber(raw, i + 1);
+                    if(this->isNumber(raw[i - 1]) || raw[i - 1] == ')') this->pushToStackLogic('+', res, stack); // if prev of '-' is not any operation, push '+' to stack
+                    res->append(number);
+                    i += number.length();
                 }
-                continue;
-            }
+                else { 
+                    this->pushToStackLogic('-', res, stack); // case next to '-' is number in ( )
+                    i++;    
+                }   
+            }   
             else {
-
-                if(stack->isEmpty() || raw[i] == '(') {
-                    // std::cout << "case 1: " << raw[i] << "\n";
-                    stack->push(charToStr(raw[i]));
-                }
-                else if(raw[i] == ')') { // if current iteration is ')' we gonna pop stack and append in linked list until we find '('
-                    // std::cout << "case 2: " << raw[i] << "\n";
-                    while(!stack->isEmpty() && stack->peek() != "(") {
-                        res->append(stack->peek());
-                        stack->pop();
-                    }
-                    stack->pop();
-                    if(!negativeLogicStack->isEmpty()) { // if value in parenthesis need to be negative then we gonna append -1, *, + in linked list
-                        for(int count = 0; count < 3; count++) {
-                            res->append(negativeLogicStack->peek());
-                            negativeLogicStack->pop();
-                        }
-                    }
-                }
-                else if(precedence[indexOf(symbol, raw[i])] >= precedence[indexOf(symbol, stack->peek()[0])]) {
-                    // std::cout << "case 3: " << raw[i] << "\n";
-                    // std::cout << raw[i] << " " << stack->peek() << std::endl;
-                    stack->push(charToStr(raw[i]));
-                }
-                else {
-                    // std::cout << "case 4: " << raw[i] << "\n";
-                    while(!stack->isEmpty() && stack->peek() != "(" && (precedence[indexOf(symbol, raw[i])] < precedence[indexOf(symbol, stack->peek()[0])])) {
-                        // std::cout << "peek: " << stack->peek() << "\n";
-                        res->append(stack->peek());
-                        stack->pop();
-                    }
-                    stack->push(charToStr(raw[i])); 
-                }
+                this->pushToStackLogic(raw[i], res, stack);
                 i++;
             }
         }
@@ -161,6 +115,37 @@ public:
             stack->pop();
         }
         return res;
+    }
+
+    void pushToStackLogic(char c, LinkedList<string> *res, Stack<string> *stack) {
+        string symbol = "(+-*/^";
+        int precedence[] = {0, 1, 2, 3, 4, 5}; // precedence pair with operations in symbol
+        if(stack->isEmpty() || c == '(') {
+            // std::cout << "case 1: " << c << "\n";
+            stack->push(charToStr(c));
+        }
+        else if(c == ')') { // if current iteration is ')' we gonna pop stack and append in linked list until we find '('
+            // std::cout << "case 2: " << c << "\n";
+            while(!stack->isEmpty() && stack->peek() != "(") {
+                res->append(stack->peek());
+                stack->pop();
+            }
+            stack->pop();
+        }
+        else if(precedence[indexOf(symbol, c)] >= precedence[indexOf(symbol, stack->peek()[0])]) {
+            // std::cout << "case 3: " << c << "\n";
+            // std::cout << c << " " << stack->peek() << std::endl;
+            stack->push(charToStr(c));
+        }
+        else {
+            // std::cout << "case 4: " << c << "\n";
+            while(!stack->isEmpty() && stack->peek() != "(" && (precedence[indexOf(symbol, c)] < precedence[indexOf(symbol, stack->peek()[0])])) {
+                // std::cout << "peek: " << stack->peek() << "\n";
+                res->append(stack->peek());
+                stack->pop();
+            }
+            stack->push(charToStr(c)); 
+        }
     }
 
     double doArithmetic(string s1, string s2, string symbol) {
@@ -246,5 +231,11 @@ public:
 
     string doubleToString(double num) {
         return std::to_string(num);
+    }
+
+    string reformat(string s) {
+        string res = "";
+        for(int i = 0, size = s.length(); i < size; i++) { if(s[i] != ' ') res += s[i]; }
+        return res;
     }
 };
