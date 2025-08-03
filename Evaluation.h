@@ -36,7 +36,7 @@ public:
         return logs->getSize();
     }
 
-    void showLogs() { 
+    void showLogs() {
         Node<Pair*> *temp = logs->getHead();
         int count = 1;
         while(temp) {
@@ -52,17 +52,13 @@ public:
         Node<string> *temp = list->getHead();
         // list->print();
         while(temp) {
-            // std::cout << "data: " << temp->getData() << "\n";
             if(isSubstring(symbol, temp->getData())) {
-                // std::cout << "Do what ";
                 double num1, num2;
                 num2 = stack->peek();
                 stack->pop();
                 num1 = stack->peek();
-                // std::cout << "num1 ... num2: " << num1 << " " << temp->getData() << " " << num2 << std::endl;
                 stack->pop();
-                stack->push(doArithmetic(num1, num2, temp->getData()));
-                // std::cout << "num3: " << stack->peek() << std::endl;
+                stack->push(doArithmetic(num1, num2, temp->getData())); // get num1 and num2 from stack peek then operate them with current operation
             }
             else {
                 stack->push(stringToDouble(temp->getData()));
@@ -73,7 +69,6 @@ public:
     }
 
     LinkedList<string> *infixToPostfix(string raw) {
-        // std::cout << "Formated: " << raw << std::endl;
         int length = raw.length(), i = 0;
         Stack<string> *stack = new Stack<string>();
         LinkedList<string> *res = new LinkedList<string>();
@@ -104,7 +99,7 @@ public:
                 }   
             }   
             else {
-                this->pushToStackLogic(raw[i], res, stack);
+                this->pushToStackLogic(raw[i], res, stack); // case operation is "+*/^"
                 i++;
             }
         }
@@ -121,11 +116,9 @@ public:
         string symbol = "(+-*/^";
         int precedence[] = {0, 1, 2, 3, 4, 5}; // precedence pair with operations in symbol
         if(stack->isEmpty() || c == '(') {
-            // std::cout << "case 1: " << c << "\n";
             stack->push(charToStr(c));
         }
         else if(c == ')') { // if current iteration is ')' we gonna pop stack and append in linked list until we find '('
-            // std::cout << "case 2: " << c << "\n";
             while(!stack->isEmpty() && stack->peek() != "(") {
                 res->append(stack->peek());
                 stack->pop();
@@ -133,14 +126,10 @@ public:
             stack->pop();
         }
         else if(precedence[indexOf(symbol, c)] >= precedence[indexOf(symbol, stack->peek()[0])]) {
-            // std::cout << "case 3: " << c << "\n";
-            // std::cout << c << " " << stack->peek() << std::endl;
             stack->push(charToStr(c));
         }
         else {
-            // std::cout << "case 4: " << c << "\n";
             while(!stack->isEmpty() && stack->peek() != "(" && (precedence[indexOf(symbol, c)] < precedence[indexOf(symbol, stack->peek()[0])])) {
-                // std::cout << "peek: " << stack->peek() << "\n";
                 res->append(stack->peek());
                 stack->pop();
             }
@@ -160,13 +149,11 @@ public:
     
     double doArithmetic(double s1, double s2, string symbol) {
         double res = 0;
-        // std::cout << "s1, s2: " << s1 << ", " << s2 << "\n";
         if(symbol == "+") res = (s1) + (s2);
         else if(symbol == "-") res = (s1) - (s2);
         else if(symbol == "*") res = (s1) * (s2);
         else if(symbol == "/") res = (s1) / (s2);
         else if(symbol == "^") res = pow((s1), (s2));
-        // std::cout << "res: " << res << "\n";
         return res;
     }
 
@@ -175,7 +162,6 @@ public:
         string res = "";
         if(raw[startIndex] == '-') res = "-", startIndex++;
         for(int i = startIndex; i < length; i++) {
-            // std::cout << raw[i] << " ";  
             if(isNumber(raw[i]) || raw[i] == '.') {
                 res += raw[i];
             }
@@ -187,7 +173,6 @@ public:
     int indexOf(string s, char l) {
         int length = s.length();
         for(int i = 0; i < length; i++) {
-            // std::cout << s[i] << ", " << i << std::endl;
             if(s[i] == l) return i;
         }
         return -1;
@@ -203,15 +188,12 @@ public:
 
     bool isSubstring(string s, string subS) {
         int length = s.length();
-        // std::cout << "s, subS: " << s << ", " << subS << "/\n";
         for(int i = 0; i < length; i++) {
-            // std::cout << "s[i], subS[i]: " << s[i] << ", " << subS[i] << std::endl;
             if(s[i] == subS[0]) {
                 int length2 = subS.length();
                 for(int j = i; j < i + length2; j++) {
                     if(s[j] != subS[j - i]) return false;
                 }
-                // std::cout << subS << " ;\n";
                 return true;
             }
         }
