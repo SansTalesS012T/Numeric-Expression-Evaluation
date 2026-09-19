@@ -13,20 +13,20 @@ int main() {
 		else if(commandBuffer == "exp") {
 			cout << ": ";
 			getline(cin, exp);
-			ev.setExpression(exp);
-			cout << "result is: " << ev.getResult() << endl << endl; 
+			ev.set_expression(exp);
+			cout << "result is: " << ev.get_result() << endl << endl; 
 		}
 		else if(commandBuffer == "res") {
-			if(ev.logSize() == 0) {
+			if(ev.log_size() == 0) {
 				cout << "Please enter your expression before request a result\n\n";
 			}
-			else cout << "result is: " << ev.getResult() << endl << endl;
+			else cout << "result is: " << ev.get_result() << endl << endl;
 		}
 		else if(commandBuffer == "log") {
-			if(ev.logSize() == 0) {
+			if(ev.log_size() == 0) {
 				cout << "Log is empty\n\n";
 			}
-			else ev.showLogs(); cout << endl;
+			else ev.show_logs(); cout << endl;
 		}
 		else if(commandBuffer == "quit") break;
 	}

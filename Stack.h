@@ -1,48 +1,62 @@
+#ifndef STACK_GUARD
+#define STACK_GUARD
+
+using namespace std;
+
 #include "Node.h"
+#include <iostream>
 
 template <typename T>
 class Stack {
 private:
 	Node<T> *top;
-	int size;
+	unsigned int size;
 public:
-	Stack() {
-		top = nullptr;
-		size = 0;
-	}
+	Stack() : top(nullptr), size(0) {}
 
 	~Stack() {
-		while(!this->isEmpty()) this->pop();
+		while(!is_empty()) 
+			pop();
 	}
 
-	void clear() { while(!isEmpty()) pop(); }
-
-	bool isEmpty() { return size == 0; }
-
-	void pushNode(Node<T> *newNode) {
-		if(isEmpty()) top = newNode;
-		else {
-			newNode->setNext(top);
-			top = newNode;
-		}
-		size++;
+	void clear() { 
+		while(!is_empty()) 
+			pop(); 
 	}
 
-	void push(T newData) {
-		Node<T> *newNode = new Node<T>(newData);
-		pushNode(newNode);
+	bool is_empty() { return size == 0; }
+
+	void push(T new_data) {
+		Node<T> *node = new Node<T>(new_data);
+		push_node(node);
 	}
 
-	void pop() {
-		if(isEmpty()) return ;
-		Node<T> *before = top;
-		top  = top->getNext();
-		delete before;
+	T pop() {
+		if(is_empty())
+			throw out_of_range("Stack is empty: underflow.");
+		
+		Node<T> *del_node 	= top;
+		T data 				= del_node->get_data();
+
 		size--;
+		top = top->get_next();
+		delete del_node;
+		return data;
 	}
 
 	T peek() {
-		if(isEmpty()) return 0;
-		return top->getData();
+		if(is_empty())
+			throw out_of_range("Stack is empty: no element.");
+
+		return top->get_data();
+	}
+
+private:
+	void push_node(Node<T> *node) {
+		size++;
+		node->set_next(top);
+		top = node;
 	}
 };
+
+#endif

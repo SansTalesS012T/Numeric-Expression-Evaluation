@@ -1,178 +1,170 @@
 #include "Stack.h"
-#include "LinkedList.h"
 #include <math.h>
+#include <vector>
+#include <iostream>
+#include <cstdio>
+#include <unordered_set>
+#include <unordered_map>
 
 using namespace std;
 
 class Eval {
 private:
-	string currentExpression;
-	double currentResult;
-	LinkedList<Pair*> *logs;
+	string current_expression;
+	double current_result;
+	vector<pair<string, double>> logs;
 
 public:
-	Eval() {
-		currentExpression = "";
-		currentResult = 0;
-		this->logs = new LinkedList<Pair*>();
+	Eval() : current_expression(""), current_result(0) {}
+
+	void set_expression(string raw) {
+		current_expression = raw;
+		vector<string> arr = infix_to_postfix(reformat(raw));
+		current_result = do_eval(arr);
+		logs.push_back(pair<string, double>(raw, current_result));
 	}
 
-	~Eval() {
-		Node<Pair*> *temp = this->logs->getHead(), *next;
-		while(temp) {
-			next = temp->getNext();
-			delete temp->getData();
-			delete temp;
-			temp = next;
-		}
-		delete this->logs;
-	}
+	double get_result() { return current_result; }
 
-	void setExpression(string raw) {
-		this->currentExpression = raw;
-		LinkedList<string> *list = this->infixToPostfix(this->reformat(raw));
-		this->currentResult = this->DoEval(list);
-		delete list;
-		Pair *newLog = new Pair(raw, this->currentResult);
-		this->logs->append(newLog);
-	}
+	int log_size() { return logs.size(); }
 
-	double getResult() { return currentResult; }
-
-	int logSize() {
-		return logs->getSize();
-	}
-
-	void showLogs() {
-		Node<Pair*> *temp = logs->getHead();
-		int count = 1;
-		while(temp) {
-			std::cout << count << ": " << temp->getData()->getData() << std::endl;
-			temp = temp->getNext();
-			count++;
+	void show_logs() {
+		for(int i = 0; i < logs.size(); ++i) {
+			printf("%d : %s -> %f\n", i+1, logs[i].first.c_str(), logs[i].second);	
 		}
 	}
 
-	double DoEval(LinkedList<string> *list) {
-		string symbol = "(+-*/^";
-		Stack<double> *stack = new Stack<double>(); 
-		Node<string> *temp = list->getHead();
-		// list->print();
-		while(temp) {
-			if(isSubstring(symbol, temp->getData())) {
-				double num1, num2;
-				num2 = stack->peek();
-				stack->pop();
-				num1 = stack->peek();
-				stack->pop();
-				stack->push(doArithmetic(num1, num2, temp->getData())); // get num1 and num2 from stack peek then operate them with current operation
+private:
+
+	double do_eval(vector<string>& arr) {
+		unordered_set<char> symbol({'(', '+', '-', '*', '/', '^'});
+		Stack<double> stack;
+
+		for(string e : arr) {
+			if(e.length() == 1 && symbol.count(e[0])) {
+				double 
+					num2 = stack.pop(), 
+					num1 = stack.pop();
+
+				stack.push(do_arithmetic(num1, num2, e[0])); // get num1 and num2 from stack peek then operate them with current operation
 			}
-			else {
-				stack->push(stringToDouble(temp->getData()));
-			}
-			temp = temp->getNext();
+			else 
+				stack.push(stringToDouble(e));
 		}
-		double res = stack->peek();
-		delete stack;
+
+		double res = stack.peek();
+
 		return res;
 	}
 
-	LinkedList<string> *infixToPostfix(string raw) {
-		int length = raw.length(), i = 0;
-		Stack<string> *stack = new Stack<string>();
-		LinkedList<string> *res = new LinkedList<string>();
-		bool firstNum = true;
+	vector<string> infix_to_postfix(string raw) {
+		int 
+			length 	= raw.length(), 
+			i 		= 0;
+		bool first_num = true;
+		Stack<char> stack;
+		vector<string> res;
+
 		while(i < length) {
-			if(this->isNumber(raw[i])) { 
-				string number = this->extractNumber(raw, i); // get a current number in string as substring
+			if(is_number(raw[i])) { 
+				string number = extract_number(raw, i); // get a current number in string as substring
 				i += number.length(); // move i to back of number
-				res->append(number); // push number to back of linked list
-				firstNum = false;
+				res.push_back(number); // push number to back of linked list
+				first_num = false;
 			}
 			else if(raw[i] == '-') { // dealing with a negative number
-				if(this->isNumber(raw[i + 1]) && firstNum) { // case negative number is first order
-					string number = "-" + this->extractNumber(raw, i + 1);
-					res->append(number);
+				if(is_number(raw[i + 1]) && first_num) { // case negative number is first order
+					string number = "-"+extract_number(raw, i+1);
+					res.push_back(number);
 					i += number.length();
-					firstNum = false;   
+					first_num = false;   
 				}
-				else if(this->isNumber(raw[i + 1])) { // case next to '-' is number
-					string number = "-" + this->extractNumber(raw, i + 1);
-					if(this->isNumber(raw[i - 1]) || raw[i - 1] == ')') this->pushToStackLogic('+', res, stack); // if prev of '-' is not any operation, push '+' to stack
-					res->append(number);
+				else if(is_number(raw[i + 1])) { // case next to '-' is number
+					string number = "-"+extract_number(raw, i+1);
+					if(is_number(raw[i - 1]) || raw[i - 1] == ')') push_to_stack_logic('+', res, stack); // if prev of '-' is not any operation, push '+' to stack
+					res.push_back(number);
 					i += number.length();
 				}
 				else { 
-					this->pushToStackLogic('-', res, stack); // case next to '-' is number in ( )
+					push_to_stack_logic('-', res, stack); // case next to '-' is number in ( )
 					i++;    
 				}   
 			}   
-			else {
-				this->pushToStackLogic(raw[i], res, stack); // case operation is "+*/^"
-				i++;
-			}
+			else 
+				push_to_stack_logic(raw[i++], res, stack); // case operation is "+*/^"
 		}
 
-		// if loop end but stack still remain item then pop all stack then append to linked list
-		while(!stack->isEmpty()) {
-			res->append(stack->peek());
-			stack->pop();
+		// if loop end but stack still remain item then pop all stack then append to array
+		while(!stack.is_empty()) {
+			res.push_back(string("")+stack.peek());
+			stack.pop();
 		}
-		delete stack;
+
 		return res;
 	}
 
-	void pushToStackLogic(char c, LinkedList<string> *res, Stack<string> *stack) {
-		string symbol = "(+-*/^";
-		int precedence[] = {0, 1, 2, 3, 4, 5}; // precedence pair with operations in symbol
-		if(stack->isEmpty() || c == '(') {
-			stack->push(charToStr(c));
-		}
-		else if(c == ')') { // if current iteration is ')' we gonna pop stack and append in linked list until we find '('
-			while(!stack->isEmpty() && stack->peek() != "(") {
-				res->append(stack->peek());
-				stack->pop();
+	void push_to_stack_logic(char c, vector<string> &res, Stack<char> &stack) {
+		unordered_map<char, int> precedence = {
+			{ '(', 0 },
+			{ '+', 1 },
+			{ '-', 2 },
+			{ '*', 3 },
+			{ '/', 4 },
+			{ '^', 5 }
+		}; // precedence pair with operations in symbol
+
+		if(stack.is_empty() || c == '(') 
+			stack.push(c);
+		
+		// if current iteration is ')' we gonna pop stack and append in array until we find '('
+		else if(c == ')') { 			
+			while(!stack.is_empty() && stack.peek() != '(') {
+				res.push_back(string("")+stack.peek());
+				stack.pop();
 			}
-			stack->pop();
+			stack.pop();
 		}
-		else if(precedence[indexOf(symbol, c)] >= precedence[indexOf(symbol, stack->peek()[0])]) {
-			stack->push(charToStr(c));
-		}
+		else if(precedence[c] >= precedence[stack.peek()])
+			stack.push(c);
 		else {
-			while(!stack->isEmpty() && stack->peek() != "(" && (precedence[indexOf(symbol, c)] < precedence[indexOf(symbol, stack->peek()[0])])) {
-				res->append(stack->peek());
-				stack->pop();
+			while(!stack.is_empty() && stack.peek() != '(' && (precedence[c] < precedence[stack.peek()])) {
+				res.push_back(string("")+stack.peek());
+				stack.pop();
 			}
-			stack->push(charToStr(c)); 
+			stack.push(c); 
 		}
-	}
-
-	double doArithmetic(string s1, string s2, string symbol) {
-		double res = 0;
-		if(symbol == "+") res = stringToDouble(s1) + stringToDouble(s2);
-		else if(symbol == "-") res = stringToDouble(s1) - stringToDouble(s2);
-		else if(symbol == "*") res = stringToDouble(s1) * stringToDouble(s2);
-		else if(symbol == "/") res = stringToDouble(s1) / stringToDouble(s2);
-		else if(symbol == "^") res = pow(stringToDouble(s1), stringToDouble(s2));
-		return res;
 	}
 	
-	double doArithmetic(double s1, double s2, string symbol) {
+	double do_arithmetic(double s1, double s2, char symbol) {
 		double res = 0;
-		if(symbol == "+") res = (s1) + (s2);
-		else if(symbol == "-") res = (s1) - (s2);
-		else if(symbol == "*") res = (s1) * (s2);
-		else if(symbol == "/") res = (s1) / (s2);
-		else if(symbol == "^") res = pow((s1), (s2));
+		switch(symbol) {
+			case '+':
+				res = s1+s2;
+				break;
+			case '-':
+				res = s1-s2;
+				break;
+			case '*':
+				res = s1*s2;
+				break;
+			case '/':
+				res = s1/s2;
+				break;
+			case '^':
+				res = pow(s1, s2);
+				break;
+			default:
+				break;
+		}
 		return res;
 	}
 
-	string extractNumber(string raw, int startIndex) {
+	string extract_number(string& raw, int idx) {
 		int length = raw.length();
 		string res = "";
-		if(raw[startIndex] == '-') res = "-", startIndex++;
-		for(int i = startIndex; i < length; i++) {
-			if(isNumber(raw[i]) || raw[i] == '.') {
+		if(raw[idx] == '-') res = "-", idx++;
+		for(int i = idx; i < length; i++) {
+			if(is_number(raw[i]) || raw[i] == '.') {
 				res += raw[i];
 			}
 			else return res;
@@ -180,52 +172,17 @@ public:
 		return res;
 	}
 
-	int indexOf(string s, char l) {
-		int length = s.length();
-		for(int i = 0; i < length; i++) {
-			if(s[i] == l) return i;
-		}
-		return -1;
-	}
+	bool is_number(char l) { return '0' <= l && l <= '9'; }  
 
-	bool isInStr(string s, char l) {
-		int length = s.length();
-		for(int i = 0; i < length; i++) {
-			if(s[i] == l) return true;
-		}
-		return false;
-	}
-
-	bool isSubstring(string s, string subS) {
-		int length = s.length();
-		for(int i = 0; i < length; i++) {
-			if(s[i] == subS[0]) {
-				int length2 = subS.length();
-				for(int j = i; j < i + length2; j++) {
-					if(s[j] != subS[j - i]) return false;
-				}
-				return true;
-			}
-		}
-		return false;
-	}
-
-	string charToStr(char l) { 
-		string res = {l};
-		return res;
-	}
-
-	bool isNumber(char l) { return '0' <= l && l <= '9'; }  
-
-	double stringToDouble(string s) {
-		return std::stod(s);
+	double stringToDouble(string& s) {
+		return stod(s);
 	}
 
 	string doubleToString(double num) {
 		return std::to_string(num);
 	}
 
-	string reformat(string s) {
+	string reformat(string& s) {
 		string res = "";
 		for(int i = 0, size = s.length(); i < size; i++) { if(s[i] != ' ') res += s[i]; }
 		return res;

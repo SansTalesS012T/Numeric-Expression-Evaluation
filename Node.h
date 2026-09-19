@@ -1,27 +1,32 @@
 #ifndef NODE_H
 #define NODE_H
-#include <iostream>
-#include <stdio.h>
+
+#include <type_traits>
 
 template <typename T>
 class Node {
 private:
 	T data;
-	Node *prev, *next;
+	Node *prev;
+	Node *next;
 public:
-	Node(T newData) {
-		data = newData;
-		prev = next = nullptr;
-	}
+	Node(T data) : data(data), prev(nullptr), next(nullptr) {}
+
+	// ~Node() {
+	// 	if constexpr (std::is_pointer<T>::value) {
+	// 		delete  data;
+	// 	}
+	// }
 
 	// getter setter
-	T getData() { return data; }
-	void setData(T newData) { data = newData; }
+	T get_data() { return data; }
+	void set_data(T new_data) { data = new_data; }
 
-	Node<T> *getPrev() { return prev; }
-	void setPrev(Node<T> *newPrev) { prev = newPrev; }
+	Node<T> *get_prev() { return prev; }
+	void set_prev(Node<T> *new_data) { prev = new_data; }
 
-	Node<T> *getNext() { return next; }
-	void setNext(Node<T> *newNext) { next = newNext; }
+	Node<T> *get_next() { return next; }
+	void set_next(Node<T> *new_next) { next = new_next; }
 };
+
 #endif
