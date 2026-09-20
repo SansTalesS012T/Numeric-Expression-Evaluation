@@ -49,7 +49,7 @@ private:
 				stack.push(do_arithmetic(num1, num2, e[0])); // get num1 and num2 from stack peek then operate them with current operation
 			}
 			else 
-				stack.push(stringToDouble(e));
+				stack.push(str_to_lf(e));
 		}
 
 		double res = stack.peek();
@@ -174,12 +174,8 @@ private:
 
 	bool is_number(char l) { return '0' <= l && l <= '9'; }  
 
-	double stringToDouble(string& s) {
+	double str_to_lf(string& s) {
 		return stod(s);
-	}
-
-	string doubleToString(double num) {
-		return std::to_string(num);
 	}
 
 	string reformat(string& s) {
